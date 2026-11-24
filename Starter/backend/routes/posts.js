@@ -57,11 +57,31 @@ router.put('/:id', async (req, res) => {
   // 3) Use { new: true, runValidators: true } so validation runs and the updated doc is returned.
   // 4) Return 404 if no post exists with this id.
   // 5) Return 400 for validation errors and 500 for other server errors.
+
   if (!isValidObjectId(req.params.id)) {
     return res.status(400).json({ error: 'Invalid post id' });
   }
 
-  return res.status(501).json({ message: 'TODO: implement PUT /api/posts/:id' });
+  try {
+    const updatedPost = await Post.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    return res.json(updatedPost);
+  }
+  catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: 'Server error' });
+  }
 });
 
 router.delete('/:id', async (req, res) => {
@@ -75,8 +95,17 @@ router.delete('/:id', async (req, res) => {
   if (!isValidObjectId(req.params.id)) {
     return res.status(400).json({ error: 'Invalid post id' });
   }
+  try {
+    const deletedPost = await Post.findByIdAndDelete(req.params.id);
 
-  return res.status(501).json({ message: 'TODO: implement DELETE /api/posts/:id' });
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    return res.json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;

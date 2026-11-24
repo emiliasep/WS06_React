@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 
@@ -18,14 +19,51 @@ function PostPage() {
 
   useEffect(() => {
     // TODO (student): Replace this placeholder with GET /api/posts/:id fetch logic.
-    setLoading(false)
+    async function fetchPost() {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await fetch(`/api/posts/${id}`)
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch post')
+        }
+
+        setPost(data)
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPost()
   }, [id])
 
   async function handleDelete() {
     // TODO (student): Implement DELETE /api/posts/:id and navigate('/blog').
     setDeleting(true)
-    setError('TODO: implement DELETE /api/posts/:id in PostPage')
-    setDeleting(false)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/posts/${id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete post')
+      }
+
+      navigate('/blog')
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   if (loading) return <p className="status-msg">Loading…</p>
@@ -46,6 +84,8 @@ function PostPage() {
       <h1 className="post-detail-title">{post.title}</h1>
 
       <p className="post-detail-content">{post.content}</p>
+
+      {error && <p className="status-msg error">{error}</p>}
 
       <div className="post-detail-actions">
         <Link to={`/posts/${id}/edit`} className="btn btn-secondary">
